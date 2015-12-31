@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "INFO    Check sum..."
+
+if [ ! -e $archsum ]; then
+  echo "FATAL   $archsum not found!"
+  exit 1
+fi
+
+if [ "$(md5sum $archiso | awk -F ' ' '{print $1}')" != "$(cat $archsum)" ]; then
+  echo "FATAL   Check sum failed!"
+  exit 1
+fi
+
+echo "INFO    OK"

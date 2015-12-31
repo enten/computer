@@ -1,0 +1,51 @@
+#!/bin/bash
+
+echo "INFO    Remove all partitions on $dev"
+fdisk $dev
+
+echo "INFO    Creating partition table"
+parted -a optimal --script $dev -- mktable gpt
+parted -a optimal --script $dev -- mkpart ESP fat32 0% 513M
+parted -a optimal --script $dev -- mkpart primary ext4 513M 97%
+parted -a optimal --script $dev -- mkpart extended linux-swap 97% 100%
+parted -a optimal --script $dev -- set 1 boot on
+parted -a optimal --script $dev -- name 1 boot
+parted -a optimal --script $dev -- name 2 root
+parted -a optimal --script $dev -- name 3 swap
+
+echo "INFO    Format partitions"
+mkfs.vfat -F32 $bootdev
+mkfs.ext4 $rootdev
+mkswap $swapdev
+swapon $swapdev
+
+echo "INFO    Mount $rootdev"
+mkdir -p /arch
+mount $rootdev /arch
+
+echo "INFO    Mount $bootdev"
+mkdir -p /arch/boot
+mount $bootdev /arch/boot
+
+echo "INFO    Install core system"
+pacstrap -c /arch base base-devel networkmanager
+
+echo "INFO    Generate fstab"
+genfstab -U /arch >> /arch/etc/fstab
+
+echo "INFO    Configure boot loader"
+bootctl --path=/arch/boot install
+bootctl --path=/arch/boot update
+echo "timeout 3" >> /arch/boot/loader/loader.conf
+echo "default arch" >> /arch/boot/loader/loader.conf
+echo "title Arch Linux" >> /arch/boot/loader/entries/arch.conf
+echo "linux /vmlinuz-linux" >> /arch/boot/loader/entries/arch.conf
+echo "initrd /initramfs-linux.img" >> /arch/boot/loader/entries/arch.conf
+echo "options root=$rootdev rw init=/usr/lib/systemd/systemd" >> /arch/boot/loader/entries/arch.conf
+
+echo "INFO    Copy post-install scripts"
+mkdir -p /arch/root/scripts
+cp -R ./* /arch/root/scripts
+
+echo "INFO    Core system successfully installed"
+echo "INFO    Reboot on $rootdev and run /root/scripts/postinstall.sh"

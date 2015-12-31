@@ -1,0 +1,50 @@
+#!/bin/bash
+
+echo "INFO    Burn ISO..."
+
+if [ ! -e $archiso ]; then
+  echo "FATAL   $archiso not found!"
+  exit -1
+fi
+
+devices=$(lsblk | tail -n +2 | grep -o "^[A-Za-z]\+")
+dev=
+
+echo "Select usb device:"
+select ans in $devices; do
+  if [ -z $ans ]; then
+    echo "You must select a device"
+    continue
+  fi
+  dev="/dev/${ans}1"
+  break
+done
+
+read -p "Burn ISO into $dev? ([y]es or [N]o): "
+case $(echo $REPLY | tr '[A-Z]' '[a-z]') in
+    y|yes) echo "INFO    ISO will be burned into $dev" ;;
+    *)     echo "Cancelled" && exit ;;
+esac
+
+mkfs.fat -F 32 -I $dev
+mlabel -i $dev -s "::$archusb"
+
+syslinux $dev
+
+mkdir -p /mnt/iso
+mkdir -p /mnt/usb
+
+mount $dev /mnt/usb
+mount -o loop $archiso /mnt/iso
+
+cp -fr /mnt/iso/* /mnt/usb
+
+mkdir -p /mnt/usb/scripts
+cp -R ./* /mnt/usb/scripts
+
+umount /mnt/iso
+umount /mnt/usb
+
+rm -fr /mnt/iso /mnt/usb
+
+echo "INFO    ISO was burned successfully into $dev"

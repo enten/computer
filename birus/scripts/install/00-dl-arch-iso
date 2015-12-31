@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "INFO    ArchLinux ISO downloading..."
+
+if [ ! -e $archurl ]; then
+  echo "FATAL   $archurl not found!"
+  exit 1
+fi
+
+
+if [ ! -e $archiso ]; then
+  ./dl.sh $(cat $archurl) $archiso
+else
+  echo "INFO    Already downloaded"
+fi

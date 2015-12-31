@@ -1,0 +1,61 @@
+#!/bin/bash
+
+packages=$(cat ./packages.txt)
+
+echo "INFO    Configure network"
+cp ./install/etc/udev/rules.d/10-network.rules /etc/udev/rules.d/10-network.rules
+systemctl enable NetworkManager
+systemctl start NetworkManager
+
+echo "INFO    Configure mirror list"
+curl -s "https://www.archlinux.org/mirrorlist/?country=FR" | sed 's/#Server/Server/g' > /etc/pacman.d/mirrorlist
+
+echo "INFO    Install packages"
+pacman -S $packages
+
+echo "INFO    Install yaourt"
+if [ -z $(grep "archlinuxfr" /etc/pacman.conf) ]; then
+  echo "[archlinuxfr]" >> /etc/pacman.conf
+  echo "SigLevel = Never" >> /etc/pacman.conf
+  echo "Server = http://repo.archlinux.fr/\$arch" >> /etc/pacman.conf
+fi
+pacman -Sy yaourt
+
+echo "INFO    Configure power saving"
+cp ./install/etc/systemd/system/pm-powersave.service /etc/systemd/system/pm-powersave.service
+systemctl enable pm-powersave.service
+systemctl start pm-powersave.service
+
+echo "INFO    Configure time"
+timedatectl set-ntp true
+hwclock -w
+
+echo "INFO    Config localization"
+ln -sf /usr/share/zoneinfo/Europe/Paris /etc/localtime
+cp ./install/etc/vconsole.conf /etc/vconsole.conf
+cp ./install/locale.conf /etc/locale.conf
+echo "fr_FR.UTF-8 UTF-8" >> /etc/locale.gen
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+locale-gen
+locale > /etc/locale.conf
+
+echo "INFO    Changing root password..."
+passwd root
+
+echo "INFO    Configure root group..."
+cp ./install/etc/sudoers /etc/sudoers
+groupadd sudo
+
+echo "INFO    Creating steven user..."
+useradd -m -g users -G sudo -s /bin/bash -c 'Steven Enten' steven
+passwd steven
+
+
+cp ./install/etc/asound.conf /etc/asound.conf
+cp ./install/etc/X11/xorg.conf.d/* /etc/X11/xorg.conf.d/
+cp ./install/etc/X11/xinit/xinitrc /etc/X11/xinit/xinitrc
+
+# !!! Récupérer le script xinitrc sur la clé!
+# penser à l'étape de build de dwm etc mais côté utilisateur (il faut copier les PKGBUILD de root vers user --> cp /root/script/install/dwm /steven/ XXX
+
+
