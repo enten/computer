@@ -50,12 +50,22 @@ echo "INFO    Creating steven user..."
 useradd -m -g users -G sudo -s /bin/bash -c 'Steven Enten' steven
 passwd steven
 
+echo "INFO    Copy etc files..."
+cp -R ./install/etc/* /etc/
 
-cp ./install/etc/asound.conf /etc/asound.conf
-cp ./install/etc/X11/xorg.conf.d/* /etc/X11/xorg.conf.d/
-cp ./install/etc/X11/xinit/xinitrc /etc/X11/xinit/xinitrc
+echo "INFO    Install DWM..."
+cd ./install/dwm
+makepkg -i
 
-# !!! Récupérer le script xinitrc sur la clé!
-# penser à l'étape de build de dwm etc mais côté utilisateur (il faut copier les PKGBUILD de root vers user --> cp /root/script/install/dwm /steven/ XXX
+echo "INFO    Install DWM status bar..."
+cd ../dwmstatus
+makepkg -i
 
+echo "INFO    Install dmenu..."
+cd ../dmenu
+makepkg -i
+
+echo "INFO    Install st..."
+cd ../st
+makepkg -i
 

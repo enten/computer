@@ -1,4 +1,6 @@
+adobe-source-code-pro-fonts
 alsa-utils
+bash-completion
 ca-certificates
 curl
 dosfstools
@@ -12,7 +14,6 @@ mtools
 ntfs-3g
 openssh
 p7zip
-pm-utils
 polkit
 procps-ng
 slock
@@ -24,7 +25,6 @@ vlc
 wget
 wpa_supplicant
 xclip
-xf86-input-synaptics
 xf86-video-intel
 xorg-server
 xorg-xbacklight
